@@ -1,0 +1,78 @@
+name: Build user.js
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - src/**
+      - package.json
+      - pnpm-lock.yaml
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Get Changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)
+          {
+            echo "CHANGELOG<<EOF"
+            if [ -n "$PREV_TAG" ]; then
+              git log ${PREV_TAG}..HEAD --pretty=format:"- %s"
+            else
+              git log --pretty=format:"- %s"
+            fi
+            echo ""
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: latest
+          check-latest: true
+
+      - name: Install deps
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: |
+            - args: [--frozen-lockfile]
+
+      - name: Check
+        run: |
+          pnpm run typecheck
+          pnpm run lint:fix
+          pnpm run knip
+          pnpm run test
+
+      - name: Build
+        run: |
+          pnpm run build
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: user-js
+          path: dist/fuck-yuketang-font.user.js
+
+      - name: Release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref }}
+          name: ${{ github.ref }}
+          body: ${{ steps.changelog.outputs.CHANGELOG }}
+          files: dist/fuck-yuketang-font.user.js
+          fail_on_unmatched_files: true
