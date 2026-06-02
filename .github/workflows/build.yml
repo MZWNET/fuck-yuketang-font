@@ -60,12 +60,13 @@ jobs:
       - name: Build
         run: |
           pnpm run build
+          mv dist/fuck-yuketang-font.user.js dist/script.user.js
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v7
         with:
           name: user-js
-          path: dist/fuck-yuketang-font.user.js
+          path: dist/script.user.js
 
       - name: Release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
@@ -74,5 +75,5 @@ jobs:
           tag_name: ${{ github.ref }}
           name: ${{ github.ref_name }}
           body: ${{ steps.changelog.outputs.CHANGELOG }}
-          files: dist/fuck-yuketang-font.user.js
+          files: dist/script.user.js
           fail_on_unmatched_files: true
