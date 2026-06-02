@@ -3,6 +3,7 @@ import type { DecryptStatus } from '../../runtime/statusBus'
 
 import { createSignal, onCleanup, onMount } from 'solid-js'
 import { CONTROL_EVENT, STATUS_EVENT } from '../../runtime/statusBus'
+import { extractCopyablePlainText } from '../../services/dom/copyablePlainText'
 import styles from './StatusPanel.module.css'
 
 const INITIAL_STATUS: DecryptStatus = {
@@ -44,14 +45,14 @@ export const StatusPanel: Component = () => {
   }
 
   const copyDecryptedText = async () => {
-    const text = status().decryptedTexts?.join('\n') ?? ''
+    const text = extractCopyablePlainText() || status().decryptedTexts?.join('\n') || ''
     if (text === '')
       return
     await navigator.clipboard?.writeText(text)
   }
 
   return (
-    <aside class={classes.panel} aria-live="polite">
+    <aside class={classes.panel} data-fuck-yuketang-font-panel="" aria-live="polite">
       <div class={classes.title}>{status().enabled ? '雨课堂字形解密已开启' : '雨课堂字形解密未开启'}</div>
       <div class={classes.description}>{status().message}</div>
       <div class={classes.counter}>

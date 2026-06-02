@@ -5,7 +5,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../../src/app/App'
 import { CONTROL_EVENT, STATUS_EVENT } from '../../src/runtime/statusBus'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  document.body.replaceChildren()
+})
 
 describe('app', () => {
   it('shows the initial userscript status', () => {
@@ -43,6 +46,40 @@ describe('app', () => {
   })
 
   it('copies decrypted text from the latest status', async () => {
+    const writeText = vi.fn<() => Promise<void>>(() => Promise.resolve())
+    Object.assign(navigator, { clipboard: { writeText } })
+    document.body.innerHTML = `
+      <section>
+        <div>1.单选题</div>
+        <div>(1分)</div>
+        <p>在教材推荐的字符串处理⽅式中,优先选择()。</p>
+        <div>A</div><div>C⻛格字符数组</div>
+        <div>B</div><div>string类</div>
+        <div>C</div><div>字符指针常量</div>
+        <div>D</div><div>⼿⼯逐字符拼接</div>
+      </section>
+    `
+    render(() => <App />)
+
+    window.dispatchEvent(
+      new CustomEvent<DecryptStatus>(STATUS_EVENT, {
+        detail: { enabled: true, message: '已解密 2 段文本', decryptedCount: 2, decryptedTexts: ['第一段', '第二段'] },
+      }),
+    )
+
+    await fireEvent.click(await screen.findByRole('button', { name: '复制明文' }))
+
+    expect(writeText).toHaveBeenCalledWith([
+      '1. 单选题 (1分)',
+      '在教材推荐的字符串处理⽅式中,优先选择()。',
+      'A. C⻛格字符数组',
+      'B. string类',
+      'C. 字符指针常量',
+      'D. ⼿⼯逐字符拼接',
+    ].join('\n'))
+  })
+
+  it('falls back to decrypted text fragments when the page has no copyable text', async () => {
     const writeText = vi.fn<() => Promise<void>>(() => Promise.resolve())
     Object.assign(navigator, { clipboard: { writeText } })
     render(() => <App />)
