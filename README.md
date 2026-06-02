@@ -1,5 +1,7 @@
 # fuck-yuketang-font
 
+![coverage](badges/coverage.svg)
+
 **Fuck yuketang's font encryption, take the real characters back!!!!!**
 
 A userscript for Yuketang student exercise pages. It captures encrypted question fonts, builds glyph-to-Unicode mappings, and replaces encrypted-font text with readable plaintext.
