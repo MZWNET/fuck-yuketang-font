@@ -16,6 +16,7 @@ export default defineConfig({
           'fe-static-yuketang.yuketang.cn',
           '*.xuetangx.com',
         ],
+        license: 'MIT',
       },
     }),
   ],
