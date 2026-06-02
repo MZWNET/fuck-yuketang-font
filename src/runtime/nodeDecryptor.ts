@@ -15,8 +15,12 @@ export async function decryptNode(span: Element, fontState: FontState, options: 
 
   try {
     const map = await fontState.promise
-    if (state.disposed || !state.decryptionEnabled)
+    if (state.disposed)
       return
+    if (!state.decryptionEnabled) {
+      state.decryptingNodes.delete(span)
+      return
+    }
     if (state.fontState?.url !== fontState.url) {
       state.decryptingNodes.delete(span)
       scanAndDecrypt()

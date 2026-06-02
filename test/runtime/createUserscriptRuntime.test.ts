@@ -36,6 +36,7 @@ afterEach(() => {
   runtime = undefined
   vi.useRealTimers()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('userscript runtime', () => {
@@ -86,6 +87,7 @@ describe('userscript runtime', () => {
   })
 
   it('retries failed decryptions after later encrypted-node mutations', async () => {
+    const errorSpy = expectExpectedDecryptErrorLog()
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 }))))
     decryptTextMock.mockImplementationOnce(() => {
       throw new Error('bad glyph')
@@ -103,6 +105,7 @@ describe('userscript runtime', () => {
 
     document.body.append(encryptedSpan())
     await flushPromises()
+    expect(errorSpy).toHaveBeenCalledWith('雨课堂字形解密失败', expect.any(Error))
     expect(decryptTextMock).toHaveBeenCalledTimes(3)
     expect(span.textContent).toBe('解密文本')
   })
@@ -126,6 +129,7 @@ describe('userscript runtime', () => {
   })
 
   it('keeps retrying when font downloads fail', async () => {
+    const errorSpy = expectExpectedDecryptErrorLog()
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response('', { status: 500 }))))
     document.head.append(styleWithFont(FONT_URL))
     document.body.append(encryptedSpan())
@@ -138,6 +142,7 @@ describe('userscript runtime', () => {
 
     document.body.append(encryptedSpan())
     await flushPromises()
+    expect(errorSpy).toHaveBeenCalledWith('雨课堂字形解密失败', expect.any(Error))
     expect(decryptTextMock).not.toHaveBeenCalled()
   })
 
@@ -171,6 +176,7 @@ describe('userscript runtime', () => {
   })
 
   it('reports GM_xmlhttpRequest transport errors', async () => {
+    const errorSpy = expectExpectedDecryptErrorLog()
     const statuses: DecryptStatus[] = []
     window.addEventListener(STATUS_EVENT, event => statuses.push((event as CustomEvent<DecryptStatus>).detail))
     vi.stubGlobal(
@@ -188,6 +194,7 @@ describe('userscript runtime', () => {
     await vi.advanceTimersByTimeAsync(500)
     await flushPromises()
 
+    expect(errorSpy).toHaveBeenCalledWith('雨课堂字形解密失败', expect.any(Error))
     expect(statuses.map(status => status.message)).toContain('解密失败，等待页面或字体刷新后重试')
   })
 
@@ -220,6 +227,7 @@ describe('userscript runtime', () => {
   })
 
   it('reports GM_xmlhttpRequest HTTP failures', async () => {
+    const errorSpy = expectExpectedDecryptErrorLog()
     const statuses: DecryptStatus[] = []
     window.addEventListener(STATUS_EVENT, event => statuses.push((event as CustomEvent<DecryptStatus>).detail))
     vi.stubGlobal(
@@ -237,6 +245,7 @@ describe('userscript runtime', () => {
     await vi.advanceTimersByTimeAsync(500)
     await flushPromises()
 
+    expect(errorSpy).toHaveBeenCalledWith('雨课堂字形解密失败', expect.any(Error))
     expect(statuses.map(status => status.message)).toContain('解密失败，等待页面或字体刷新后重试')
   })
 
@@ -305,7 +314,7 @@ describe('userscript runtime', () => {
     expect(span.textContent).toBe('\uE001')
   })
 
-  it('does not mutate text when decryption is paused before font resolution', async () => {
+  it('retries a pending encrypted node after decryption is paused and re-enabled', async () => {
     const { promise, resolve } = Promise.withResolvers<DecryptionMap>()
     decryptFontMock.mockReturnValueOnce(promise)
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(new ArrayBuffer(8), { status: 200 }))))
@@ -324,6 +333,12 @@ describe('userscript runtime', () => {
 
     expect(decryptTextMock).not.toHaveBeenCalled()
     expect(span.textContent).toBe('\uE001')
+
+    enableDecryption()
+    await flushPromises()
+
+    expect(decryptTextMock).toHaveBeenCalledWith('\uE001', expect.any(Map))
+    expect(span.textContent).toBe('解密文本')
   })
 
   it('clears polling timers on dispose', async () => {
@@ -381,6 +396,10 @@ function encryptedSpan(): HTMLSpanElement {
   span.className = 'xuetangx-com-encrypted-font'
   span.textContent = '\uE001'
   return span
+}
+
+function expectExpectedDecryptErrorLog() {
+  return vi.spyOn(console, 'error').mockImplementation(() => undefined)
 }
 
 function enableDecryption(): void {
