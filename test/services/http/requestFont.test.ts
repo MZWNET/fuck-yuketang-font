@@ -11,13 +11,13 @@ afterEach(() => {
 })
 
 describe('requestFont', () => {
-  it('fetches font bytes with credentials when userscript transport is unavailable', async () => {
+  it('fetches font bytes without credentials when userscript transport is unavailable', async () => {
     const buffer = new ArrayBuffer(8)
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(buffer, { status: 200 }))))
 
     await expect(requestFont(FONT_URL)).resolves.toEqual(buffer)
 
-    expect(fetch).toHaveBeenCalledWith(FONT_URL, { credentials: 'include' })
+    expect(fetch).toHaveBeenCalledWith(FONT_URL)
   })
 
   it('uses GM_xmlhttpRequest when available', async () => {

@@ -53,7 +53,7 @@ describe('userscript runtime', () => {
     await vi.advanceTimersByTimeAsync(500)
     await flushPromises()
 
-    expect(fetch).toHaveBeenCalledWith(FONT_URL, { credentials: 'include' })
+    expect(fetch).toHaveBeenCalledWith(FONT_URL)
     expect(decryptFontMock).toHaveBeenCalledWith(expect.any(ArrayBuffer))
     expect(decryptTextMock).not.toHaveBeenCalled()
     expect(span.textContent).toBe('\uE001')
