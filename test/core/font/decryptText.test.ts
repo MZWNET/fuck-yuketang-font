@@ -15,6 +15,15 @@ describe('decryptText', () => {
     expect(decryptText('甲\uE001😀乙', map)).toBe('甲你好乙')
   })
 
+  it('normalizes CJK radical mappings to unified ideographs', () => {
+    const map = new Map([
+      [0xE001, 0x2F49],
+      [0xE002, 0x2F47],
+    ])
+
+    expect(decryptText('\uE001\uE002', map)).toBe('月日')
+  })
+
   it('collapses whitespace only after at least one replacement', () => {
     expect(decryptText('  a\n\t\uE001   b\r\n', new Map([[0xE001, 0x4F60]]))).toBe('a 你 b')
     expect(decryptText('  a\n\t b\r\n', new Map())).toBe('  a\n\t b\r\n')
