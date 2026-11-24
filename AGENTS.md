@@ -9,6 +9,7 @@ This file is for automated coding agents working in this repository. Read it bef
 The target page is configured in `vite.config.ts` through `vite-plugin-monkey`:
 
 - `*://www.yuketang.cn/v2/web/cloud/student/exercise/*`
+- `*://www.yuketang.cn/v2/web/iframe-exercise/*` (exercise content iframe used by the `lms-graph` workspace)
 - userscript grant: `GM_xmlhttpRequest`
 - connect domains: Yuketang and XuetangX related domains
 

@@ -6,7 +6,7 @@
 
 A userscript for Yuketang student exercise pages. It captures encrypted question fonts, builds glyph-to-Unicode mappings, and replaces encrypted-font text with readable plaintext.
 
-The script targets `*://www.yuketang.cn/v2/web/cloud/student/exercise/*`.
+The script targets the student exercise pages at `*://www.yuketang.cn/v2/web/cloud/student/exercise/*` and the `lms-graph` exercise iframe at `*://www.yuketang.cn/v2/web/iframe-exercise/*`.
 
 ## Features
 

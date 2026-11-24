@@ -2,7 +2,9 @@
 import { mountApp } from './app/mountApp'
 import { createUserscriptRuntime } from './runtime'
 
-if (window.self === window.top) {
+const isExerciseContentFrame = location.pathname.startsWith('/v2/web/iframe-exercise/')
+
+if (window.self === window.top || isExerciseContentFrame) {
   createUserscriptRuntime()
   mountApp()
 }

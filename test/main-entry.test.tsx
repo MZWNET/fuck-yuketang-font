@@ -14,6 +14,7 @@ describe('main.tsx entrypoint', () => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+    window.history.replaceState({}, '', '/')
     document.head.replaceChildren()
     document.body.replaceChildren()
   })
@@ -42,5 +43,15 @@ describe('main.tsx entrypoint', () => {
     expect(document.body.querySelector('#fuck-yuketang-font-root')).toBeNull()
     expect(fetchMock).not.toHaveBeenCalled()
     expect(vi.getTimerCount()).toBe(0)
+  })
+
+  it('starts inside the exercise content iframe used by the lms-graph page', async () => {
+    const parentWindow = {} as Window
+    vi.spyOn(window, 'top', 'get').mockReturnValue(parentWindow)
+    window.history.replaceState({}, '', '/v2/web/iframe-exercise/33439457/91166140?noLeftMenu=1&node_id=10509699')
+
+    await import('../src/main.tsx')
+
+    expect(document.body.querySelector('#fuck-yuketang-font-root')).not.toBeNull()
   })
 })
